@@ -1,4 +1,4 @@
-module github.com/cyrus-and/gdb
+module github.com/fansqz/GoDebugger
 
 go 1.18
 
