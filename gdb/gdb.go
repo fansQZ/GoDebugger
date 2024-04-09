@@ -97,6 +97,7 @@ func NewCmd(cmd []string, onNotification NotificationCallback) (*Gdb, error) {
 	// prepare the command interface
 	gdb.sequence = 1
 	gdb.pending = make(map[string]chan map[string]interface{})
+	gdb.pending2 = make(map[string]AsyncCallback)
 
 	gdb.recordReaderDone = make(chan bool)
 
