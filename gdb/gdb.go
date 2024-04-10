@@ -1,7 +1,8 @@
 package gdb
 
 import (
-	"github.com/kr/pty"
+	"github.com/creack/pty"
+	"golang.org/x/term"
 	"io"
 	"os"
 	"os/exec"
@@ -49,7 +50,10 @@ func NewCustom(gdbCmd []string, onNotification NotificationCallback) (*Gdb, erro
 	if err != nil {
 		return nil, err
 	}
-
+	_, err = term.MakeRaw(int(ptm.Fd()))
+	if err != nil {
+		return nil, err
+	}
 	// create GDB command
 	gdbCmd = append(gdbCmd, "--nx", "--quiet", "--interpreter=mi2", "--tty", pts.Name())
 	gdb, err := NewCmd(gdbCmd, onNotification)
