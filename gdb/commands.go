@@ -60,7 +60,7 @@ func (gdb *Gdb) Send(operation string, arguments ...string) (map[string]interfac
 }
 
 // SendAsync 异步发送，通过回调函数返回执行结果
-func (gdb *Gdb) SendAsync(operation string, callback AsyncCallback, arguments ...string) error {
+func (gdb *Gdb) SendAsync(callback AsyncCallback, operation string, arguments ...string) error {
 	// atomically increase the sequence number and queue a pending command
 	gdb.mutex.Lock()
 	sequence := strconv.FormatInt(gdb.sequence, 10)
