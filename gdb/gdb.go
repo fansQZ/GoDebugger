@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 )
 
 // Gdb represents a GDB instance. It implements the ReadWriter interface to
@@ -51,6 +52,11 @@ func NewCustom(gdbCmd []string, onNotification NotificationCallback) (*Gdb, erro
 		return nil, err
 	}
 	_, err = term.MakeRaw(int(ptm.Fd()))
+	if err != nil {
+		return nil, err
+	}
+	// 清除缓存
+	err = syscall.SetNonblock(int(ptm.Fd()), true)
 	if err != nil {
 		return nil, err
 	}
