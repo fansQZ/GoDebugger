@@ -1,7 +1,13 @@
 package gdb
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"github.com/creack/pty"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/client"
 	"golang.org/x/term"
 	"io"
 	"os"
@@ -75,6 +81,46 @@ func NewCustom(gdbCmd []string, onNotification NotificationCallback) (*Gdb, erro
 // exec.Command, so the first element should be the command to run, and the
 // remaining elements should each contain a single argument.
 func NewCmd(cmd []string, onNotification NotificationCallback) (*Gdb, error) {
+	c, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+	// TODO config by env
+	// TODO context
+	// pull image
+	resp, err := c.ImagePull(context.Background(), "alpine:3.18.3", image.PullOptions{})
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(resp)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(body)) // pull image....
+	// create container
+	// TODO container name is a uuid or ucid....
+	create, err := c.ContainerCreate(context.Background(), &container.Config{Image: "alpine:3.18.3", AttachStdin: true, AttachStdout: true, Cmd: []string{"-td", "/bin/sh"}}, &container.HostConfig{AutoRemove: false}, nil, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(create.ID)
+	execCreate, err := c.ContainerExecCreate(context.Background(), create.ID, container.ExecOptions{User: "user", AttachStdout: true, AttachStdin: true, Cmd: []string{"ls", "-a"}})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(execCreate.ID)
+	r, err := c.ContainerExecAttach(context.Background(), execCreate.ID, container.ExecAttachOptions{})
+	if err != nil {
+		return nil, err
+	}
+	buf := new(bytes.Buffer)
+	from, err := buf.ReadFrom(r.Reader)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(from)
+	// 在docker中启动gdb和用户进程，通过cli交互
+
 	gdb := Gdb{onNotification: onNotification}
 
 	gdb.cmd = exec.Command(cmd[0], cmd[1:]...)
